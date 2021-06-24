@@ -1,14 +1,19 @@
+function PreparePlane(departure, destination, route)
+	if Config.UseESX then
+		TriggerServerEvent('airports:payTicket', departure, destination, route)
+	else
+		CreatePlane(departure, destination, route)
+	end
+end
+
 function CreatePlane(departure, destination, route)
+	print("Creating plane ")
 	local x, y, z = table.unpack(departure.PlaneSpawn[1])
 	local h = departure.PlaneSpawn[2]
 	current_departure = departure
 	current_destination = destination
-	if Config.UseESX then
-		TriggerServerEvent('airports:payTicket', x, y, z, h, departure.Zone, destination.Zone, Config.TicketPrice)
-		return
-	end
 	if not Config.ESXMenu then
-		mainMenu:Visible(not mainMenu:Visible())
+		mainMenu:Visible(false)
 	end
 
 	modelHash = GetHashKey(route.Planes[math.random(#route.Planes)])
@@ -61,7 +66,7 @@ function CreatePlane(departure, destination, route)
 end
 
 RegisterNetEvent("airports:departure")
-AddEventHandler("airports:departure",  function(x, y, z, heading, start, planeDest)
+AddEventHandler("airports:departure",  function(departure, destination, route)
 	ClearAllHelpMessages()
-	CreatePlane(x, y, z, heading, start, planeDest)
+	CreatePlane(departure, destination, route)
 end)

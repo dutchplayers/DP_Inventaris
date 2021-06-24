@@ -32,14 +32,9 @@ if Config.ESXMenu then
 			align    = Config.ESXMenuAlign,
 			elements = elements
 		}, function(data, menu)
-			print("ESX.UI.Menu.Open")
 			local type = data.current.type
-			print(type)
 			local routes = GetRoutesForCurrentPosition()
-			-- local departure = type[1]
-			-- print(departure.Name)
-			-- local destination = type[2]
-			-- CreatePlane(departure, destination, Config.Airports[type[3]])
+			PreparePlane(routes.departure, routes.arrivals[type], Config.Airports[type[3]])
 			menuOpen = false
 			menu.close()
 			return
@@ -82,7 +77,7 @@ else
 						for k, departure in pairs(Config.Airports[key].Destinations) do
 							print(k)
 							if IsEntityInZone(PlayerPedId(), departure.Zone) then
-								CreatePlane(departure, Config.Airports[key], departure.Destinations[key])
+								PreparePlane(departure, Config.Airports[key], departure.Destinations[key])
 								menu.close()
 							return
 							end
