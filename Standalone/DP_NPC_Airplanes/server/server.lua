@@ -4,6 +4,7 @@ if Config.UseESX then
 
 	RegisterServerEvent("airports:payTicket")
 	AddEventHandler("airports:payTicket", function(departure, destination, route)
+		print("airports:payTicket " .. tostring(departure) .. tostring(destination) .. tostring(route))
 		if Config.UseESX then
 			local _source = source
 			local xPlayer = ESX.GetPlayerFromId(_source)
