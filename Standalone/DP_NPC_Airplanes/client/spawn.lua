@@ -1,11 +1,23 @@
-function CreatePlane(x, y, z, heading, startZone, destination)
-	if Config.ESXMenu then
+function PreparePlane(departure, destination, route)
+	if Config.UseESX then
+		TriggerServerEvent('airports:payTicket', departure, destination, route)
 	else
-		mainMenu:Visible(not mainMenu:Visible())
+		CreatePlane(departure, destination, route)
+	end
+end
+
+function CreatePlane(departure, destination, route)
+	print("Creating plane ")
+	local x, y, z = table.unpack(departure.PlaneSpawn[1])
+	local h = departure.PlaneSpawn[2]
+	current_departure = departure
+	current_destination = destination
+	if not Config.ESXMenu then
+		mainMenu:Visible(false)
 	end
 
-	modelHash = GetHashKey(Config.PlaneModel)
-	pilotModel = GetHashKey(Config.PilotModel)
+	modelHash = GetHashKey(route.Planes[math.random(#route.Planes)])
+	pilotModel = GetHashKey(route.Pilots[math.random(#route.Pilots)])
 	
 	RequestModel(modelHash)
 	while not HasModelLoaded(modelHash) do
@@ -20,13 +32,14 @@ function CreatePlane(x, y, z, heading, startZone, destination)
 	if HasModelLoaded(modelHash) and HasModelLoaded(pilotModel) then
 		ClearAreaOfEverything(x, y, z, 1500, false, false, false, false, false)
 
-		AirPlane = CreateVehicle(modelHash, x, y, z-1.0, heading, true, false)
+		AirPlane = CreateVehicle(modelHash, x, y, z-1.0, h, true, false)
+		ControlLandingGear(AirPlane, 0)
 		SetVehicleOnGroundProperly(AirPlane)
 		SetVehicleEngineOn(AirPlane, true, true, true)
 		SetEntityProofs(AirPlane, true, true, true, true, true, true, true, false)
 		SetVehicleHasBeenOwnedByPlayer(AirPlane, true)
 
-		pilot = CreatePedInsideVehicle(AirPlane, 6, pilotModel, -1, true, false)
+		local pilot = CreatePedInsideVehicle(AirPlane, 6, pilotModel, -1, true, false)
 
 		SetBlockingOfNonTemporaryEvents(pilot, true)
 
@@ -44,35 +57,16 @@ function CreatePlane(x, y, z, heading, startZone, destination)
 		SetModelAsNoLongerNeeded(pilotModel)
 	end
 
-	if startZone == "AIRP" and destination == "DESRT" then -- goed
-		TaskVehicleDriveToCoordLongrange(pilot, AirPlane, -1461.73,-2426.62,13.94, GetVehicleModelMaxSpeed(modelHash), 16777216, 0.0)
-		Wait(15000)
-		TaskPlaneMission(pilot, AirPlane, 0, 0, -107.2212, 2717.5534, 61.9673, 4, GetVehicleModelMaxSpeed(modelHash), 1.0, 0.0, 10.0, 40.0)
-	elseif startZone == "AIRP" and destination == "ISHEIST" then
-		TaskVehicleDriveToCoordLongrange(pilot, AirPlane, -1461.73,-2426.62,13.94, GetVehicleModelMaxSpeed(modelHash), 16777216, 0.0)
-		Wait(15000)
-		TaskPlaneMission(pilot, AirPlane, 0, 0, 3526.92,-3951.51,117.74, 4, GetVehicleModelMaxSpeed(modelHash), 1.0, 0.0, 10.0, 40.0)
-	elseif startZone == "DESRT" and destination == "AIRP" then -- goed
-		TaskVehicleDriveToCoordLongrange(pilot, AirPlane, 1403.0020751953, 2995.9179, 40.5507, GetVehicleModelMaxSpeed(modelHash), 16777216, 0.0)
-		Wait(15000)
-		TaskPlaneMission(pilot, AirPlane, 0, 0, -1571.5589, -556.7288, 114.4482, 4, GetVehicleModelMaxSpeed(modelHash), 1.0, 0.0, 5.0, 40.0)
-	elseif startZone == "DESRT" and destination == "ISHEIST" then
-		TaskVehicleDriveToCoordLongrange(pilot, AirPlane, 1403.0020751953, 2995.9179, 40.5507, GetVehicleModelMaxSpeed(modelHash), 16777216, 0.0)
-		Wait(15000)
-		TaskPlaneMission(pilot, AirPlane, 0, 0, 3526.92,-3951.51,117.74, 4, GetVehicleModelMaxSpeed(modelHash), 1.0, 0.0, 5.0, 40.0)
-	elseif startZone == "ISHEIST" and destination == "DESRT" then
-		TaskVehicleDriveToCoordLongrange(pilot, AirPlane, 4101.35,-4636.82,4.18, GetVehicleModelMaxSpeed(modelHash), 16777216, 0.0)
-		Wait(15000)
-		TaskPlaneMission(pilot, AirPlane, 0, 0, -107.2212, 2717.5534, 61.9673, 4, GetVehicleModelMaxSpeed(modelHash), 1.0, 0.0, 5.0, 40.0)
-	elseif startZone == "ISHEIST" and destination == "AIRP" then
-		TaskVehicleDriveToCoordLongrange(pilot, AirPlane, 4101.35,-4636.82,4.18, GetVehicleModelMaxSpeed(modelHash), 16777216, 0.0)
-		Wait(15000)
-		TaskPlaneMission(pilot, AirPlane, 0, 0, -1571.5589, -556.7288, 114.4482, 4, GetVehicleModelMaxSpeed(modelHash), 1.0, 0.0, 5.0, 40.0)
-	end
+	local x1, y1, z1 = table.unpack(departure.TaskVehicleDriveToCoordLongrange)
+	local x2, y2, z2 = table.unpack(departure.TaskPlaneMission)
+	TaskVehicleDriveToCoordLongrange(pilot, AirPlane, x1, y1, z1, GetVehicleModelMaxSpeed(modelHash), 16777216, 0.0)
+	ControlLandingGear(AirPlane, 0)
+	Wait(15000)
+	TaskPlaneMission(pilot, AirPlane, 0, 0, x2, y2, z2, 4, GetVehicleModelMaxSpeed(modelHash), 1.0, 0.0, 10.0, 40.0)
 end
 
 RegisterNetEvent("airports:departure")
-AddEventHandler("airports:departure",  function(x, y, z, heading, start, planeDest)
+AddEventHandler("airports:departure",  function(departure, destination, route)
 	ClearAllHelpMessages()
-	CreatePlane(x, y, z, heading, start, planeDest)
+	CreatePlane(departure, destination, route)
 end)

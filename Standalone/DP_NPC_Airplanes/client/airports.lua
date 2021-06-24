@@ -1,134 +1,94 @@
 Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(5000)
-
-		if not landing then
-			if IsEntityInAir(AirPlane) then
-				SetVehicleLandingGear(AirPlane, 1)
-			end
-			if startZone == "AIRP" and planeDest == "DESRT" then
-				if IsEntityInZone(AirPlane, "DESRT") or IsEntityInZone(PlayerPedId(), "GREATC") then
-					TaskPlaneLand(pilot, AirPlane, 881.4462, 3060.4829, 41.1682+10.0001, 1657.07, 3238.21, 40.5669+1.0001)
-					SetPedKeepTask(pilot, true)
-					landing = true
+		if current_departure and current_destination then
+			if not landing then
+				if IsEntityInAir(AirPlane) then
+					SetVehicleLandingGear(AirPlane, 1)
 				end
-			elseif startZone == "AIRP" and planeDest == "ISHEIST" then --
-				if IsEntityInZone(AirPlane, "ISHEIST") or IsEntityInZone(AirPlane, "OCEANA") then
-					TaskPlaneLand(pilot, AirPlane, 4009.69,-4670.94,4.18+1.0001, 4274.53,-4574.21,4.18+1.0001)
-					SetPedKeepTask(pilot, true)
-					landing = true
-				end
-			elseif startZone == "DESRT" and planeDest == "AIRP" then
-				if IsEntityInZone(AirPlane, "RICHM") or IsEntityInZone(AirPlane, "OCEANA") then
-					TaskPlaneLand(pilot, AirPlane, -1792.00122, -2882.29980, 13.9440+1.0001, -998.5266, -3341.3579, 13.9444+1.0001)
-					SetPedKeepTask(pilot, true)
-					landing = true
-				end
-			elseif startZone == "DESRT" and planeDest == "ISHEIST" then --
-				if IsEntityInZone(AirPlane, "ISHEIST") or IsEntityInZone(AirPlane, "OCEANA") then
-					TaskPlaneLand(pilot, AirPlane, 4009.69,-4670.94,4.18+1.0001, 4274.53,-4574.21,4.18+1.0001)
-					SetPedKeepTask(pilot, true)
-					landing = true
-				end
-			elseif startZone == "ISHEIST" and planeDest == "AIRP" then
-				if IsEntityInZone(AirPlane, "RICHM") or IsEntityInZone(AirPlane, "OCEANA") then
-					TaskPlaneLand(pilot, AirPlane, -1792.00122, -2882.29980, 13.9440+1.0001, -998.5266, -3341.3579, 13.9444+1.0001)
-					SetPedKeepTask(pilot, true)
-					landing = true
-				end
-			elseif startZone == "ISHEIST" and planeDest == "DESRT" then
-				if IsEntityInZone(AirPlane, "DESRT") or IsEntityInZone(PlayerPedId(), "GREATC") then
-					TaskPlaneLand(pilot, AirPlane, 881.4462, 3060.4829, 41.1682+10.0001, 1657.07, 3238.21, 40.5669+1.0001)
+				if IsEntityInZone(AirPlane, current_destination.Zone) then
+					x1, y1, z1 = table.unpack(departure.RunWayStart)
+					x2, y2, z2 = table.unpack(departure.RunWayEnd)
+					TaskPlaneLand(pilot, AirPlane, x1, y1, z1, x2, y2, z2)
 					SetPedKeepTask(pilot, true)
 					landing = true
 				end
 			end
-		end
-
-		if not IsEntityInZone(PlayerPedId(), startZone) then
-			if not IsEntityInAir(AirPlane) and IsPedInVehicle(PlayerPedId(), AirPlane, false) then
-				TaskVehicleTempAction(pilot, Airplane, 27, -1)
-				SetVehicleHandbrake(AirPlane, true)
-
-				if GetEntitySpeed(AirPlaine) == 0.0 then
-					if IsEntityInZone(PlayerPedId(), "AIRP") then
-						Wait(500)
-						DoScreenFadeOut(200)
-						while not IsScreenFadedOut() do
-							Citizen.Wait(0)
+			if not IsEntityInZone(PlayerPedId(), current_departure.Zone) then
+				if not IsEntityInAir(AirPlane) and IsPedInVehicle(PlayerPedId(), AirPlane, false) then
+					TaskVehicleTempAction(pilot, Airplane, 27, -1)
+					SetVehicleHandbrake(AirPlane, true)
+					if GetEntitySpeed(AirPlaine) == 0.0 then
+						if IsEntityInZone(PlayerPedId(), current_destination.Zone) then
+							Wait(500)
+							DoScreenFadeOut(200)
+							while not IsScreenFadedOut() do
+								Citizen.Wait(0)
+							end
+							DeleteVehicle(AirPlane)
+							DeleteEntity(pilot)
+							if current_destination.PlayerDropOff then
+								x, y, z = table.unpack(current_destination.PlayerDropOff[1])
+								SetEntityCoords(PlayerPedId(), x, y, z)
+								SetEntityHeading(PlayerPedId(), current_destination.PlayerDropOff[2])
+							end
+							Wait(800)
+							DoScreenFadeIn(500)
+						else
+							TaskLeaveVehicle(PlayerPedId(), AirPlane, 0)
+							Wait(5000)
+							DeleteVehicle(AirPlane)
+							DeleteEntity(pilot)
 						end
-						DeleteVehicle(AirPlane)
-						DeleteEntity(pilot)
-						SetEntityCoords(PlayerPedId(), -1042.0395, -2740.7780, 20.1692)
-						SetEntityHeading(PlayerPedId(), 340.2285)
-						Wait(800)
-						DoScreenFadeIn(500)
-					else
-						TaskLeaveVehicle(PlayerPedId(), AirPlane, 0)
-						Wait(5000)
-						DeleteVehicle(AirPlane)
-						DeleteEntity(pilot)
 					end
 				end
-			end
-
-			if not IsPedInVehicle(PlayerPedId(), AirPlane, false) and landing == true then
-				SetVehicleHandbrake(AirPlane, false)
-				SetBlockingOfNonTemporaryEvents(pilot, false)
-				
-				SetEntityAsNoLongerNeeded(pilot)
-				SetEntityAsNoLongerNeeded(AirPlane)
-
-				startZone = nil
-				planeDest = nil
-				landing = false
+				if not IsPedInVehicle(PlayerPedId(), AirPlane, false) and landing == true then
+					SetVehicleHandbrake(AirPlane, false)
+					SetBlockingOfNonTemporaryEvents(pilot, false)
+					SetEntityAsNoLongerNeeded(pilot)
+					SetEntityAsNoLongerNeeded(AirPlane)
+					current_departure = nil
+					current_destination = nil
+					landing = false
+				end
 			end
 		end
-
 	end
 end)
 
 Citizen.CreateThread(function()
 	while true do
-		Wait(0)
-		for k,v in pairs(Config.Markers) do
-			if GetDistanceBetweenCoords(GetEntityCoords(PlayerPedId(), true), v.x, v.y, v.z, true) < 80.0 then
-				if not IsPedInAnyPlane(PlayerPedId()) then
+		Wait(1)
+		local playerCoords = GetEntityCoords(PlayerPedId(), true)
+		for k,v in pairs(Config.Airports) do
+			v = Config.Airports[k]
+			x, y, z = table.unpack(v.Ticket)
+			local distance = GetDistanceBetweenCoords(playerCoords, x, y, z, true)
+			if distance < 2.0 then
+				if IsControlPressed(0,46) then
 					if Config.ESXMenu then
-						DrawMarker(1, v.x, v.y, v.z-1.0001, 0, 0, 0, 0, 0, 0, 2.0, 2.0, 2.0, 255, 219, 77, 155, 0, 0, 2, 0, 0, 0, 0)
+						OpenMenu()
 					else
-						if not _menuPool:IsAnyMenuOpen() then
-							DrawMarker(1, v.x, v.y, v.z-1.0001, 0, 0, 0, 0, 0, 0, 2.0, 2.0, 2.0, 255, 219, 77, 155, 0, 0, 2, 0, 0, 0, 0)
-						end
+						CreateNativeMenu()
+							
 					end
+					ClearAllHelpMessages()
 				end
-			end
-		end
-		
-	end
-end)
-
-function IsPlayerNearAirport()
-	for k,v in pairs(Config.Markers) do
-		if GetDistanceBetweenCoords(GetEntityCoords(PlayerPedId(), true), v.x, v.y, v.z, true) < 2.0 then
-			if Config.ESXMenu then
-				if not IsHelpMessageBeingDisplayed() then
-					BeginTextCommandDisplayHelp("STRING")
-					AddTextComponentSubstringPlayerName(GetLabelText("MATC_DPADRIGHT"))
-					EndTextCommandDisplayHelp(0, 0, 1, -1)
-				end
-			else
-				if not _menuPool:IsAnyMenuOpen() then
+				if Config.ESXMenu or not _menuPool:IsAnyMenuOpen() then
 					if not IsHelpMessageBeingDisplayed() then
 						BeginTextCommandDisplayHelp("STRING")
 						AddTextComponentSubstringPlayerName(GetLabelText("MATC_DPADRIGHT"))
 						EndTextCommandDisplayHelp(0, 0, 1, -1)
 					end
-				else
-					ClearAllHelpMessages()
+				end
+			else if distance < 80.0 then
+				if not IsPedInAnyPlane(PlayerPedId()) then
+					if Config.ESXMenu or not _menuPool:IsAnyMenuOpen() then
+						DrawMarker(1, x, y, z-1.0001, 0, 0, 0, 0, 0, 0, 2.0, 2.0, 2.0, 255, 219, 77, 155, 0, 0, 2, 0, 0, 0, 0)
+					end
 				end
 			end
-			return true
+		end
 		end
 	end
-end
+end)
