@@ -8,19 +8,19 @@ if Config.UseESX then
 	end)
 end
 
-RegisterKey('keyboard', 'E',
-	function()
-	end,
-	function()
-		if IsPlayerNearAirport() then
-			if Config.ESXMenu then
-				OpenMenu()
-			else
-				mainMenu:Visible(not mainMenu:Visible())	
-			end	
-		end
-	end
-)
+-- RegisterKey('keyboard', 'E',
+-- 	function()
+-- 	end,
+-- 	function()
+-- 		if IsPlayerNearAirport() then
+-- 			if Config.ESXMenu then
+-- 				OpenMenu()
+-- 			else
+-- 				mainMenu:Visible(not mainMenu:Visible())	
+-- 			end	
+-- 		end
+-- 	end
+-- )
 
 function ShowNotification(text)
     SetNotificationTextEntry("STRING")
